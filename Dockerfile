@@ -2,7 +2,7 @@ FROM gcc:9.3 as builder
 
 MAINTAINER HaydenKow <hayden@hkowsoftware.com>
 
-ENV TOOLCHAIN_VERSION bffc9c7ad096965813df3ad90620f43343805fd6
+ENV TOOLCHAIN_VERSION c66533b38083d5c0f707e1e458d63fde30051e52
 
 # Setup path and vars for the SDK
 ENV PSPDEV=/pspdev \
@@ -38,7 +38,7 @@ RUN export PSPDEV=/pspdev \
     && dpkg-reconfigure --frontend=noninteractive dash \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && git clone https://github.com/pspdev/psptoolchain.git /toolchain \
+    && git clone https://github.com/mrneo240/psptoolchain_upstream.git /toolchain \
     && cd /toolchain \
     && git checkout -qf $TOOLCHAIN_VERSION \
     && mkdir -p /pspdev \
@@ -51,18 +51,20 @@ WORKDIR /src
 CMD ["/bin/bash"]
 
 FROM ubuntu:20.04
+
 # Setup path and vars for the SDK
 ENV PSPDEV=/pspdev \
     PSPSDK=$PSPDEV/pspsdk \
-    PATH=$PATH:$PSPDEV/bin:$PSPSDK/bin \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    TZ=America/Los_Angeles
+ENV PATH "$PATH:$PSPDEV/bin"
 
-RUN apt-get update \
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends --no-upgrade \
-        autoconf \
-        autotools \
-        libtool \
+        automake \
+#        libtool \ # Otherwise we pull in gcc
         make \
         cmake \
         doxygen \
